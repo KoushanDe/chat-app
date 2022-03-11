@@ -6,6 +6,8 @@ import { useEffect, useRef, useState } from "react";
 import CreateUser from './components/CreateUser';
 import OnlineUsers from './components/OnlineUsers';
 import MessagesControl from './components/MessagesControl';
+import Public from './components/Public';
+
 
 const socket = io(`http://localhost:5000`);
 
@@ -39,6 +41,10 @@ function App() {
     setReceiver(username);
     receiverRef.current = username; 
     setStep(prevStep => prevStep + 1);
+  }
+
+  const onPublicSelect = () => {
+    setStep(prevStep => prevStep + 2);
   }
 
   const onChatClose = () =>{
@@ -111,10 +117,38 @@ function App() {
       setUsers(users);
     });
 
+    socket.on("load_messages", (oldMessages) => {
+      console.log(oldMessages);
+      setGroupMessage(oldMessages);
+    })
+
     socket.on("new_message", (data)=>{
       console.log(data);
 
        console.log({rec: receiverRef.current,data});
+
+      if(receiverRef.current === "public")
+      {
+        setGroupMessage((prevGroupMessage) => {
+          const messages = {...prevGroupMessage};
+          const key = "public";
+  
+          if(receiverRef.current === "public"){
+            data.view = true;
+          }
+  
+  
+          if(key in messages){
+            messages[key] = [...messages[key], data];
+          }
+          else{
+            messages[key] = [data];
+          }
+  
+          return {...messages};
+        })
+      }
+      else{
 
       setGroupMessage((prevGroupMessage) => {
         const messages = {...prevGroupMessage};
@@ -133,9 +167,10 @@ function App() {
         }
 
         return {...messages};
-      })
+      })}
     })
   }, []);
+
 
   useEffect(()=>{
     //for updating view count of selected user(receiver)
@@ -190,6 +225,22 @@ function App() {
           {/* step3 select user and switch to chat window*/
             step === 2 ? (
               <MessagesControl
+              value = {message}
+              onChange =  {(e)=>setMessage(e.target.value)}
+              sendMessage = {sendMessage}
+              groupMessage = {groupMessage}
+              sortNames = {sortNames}
+              username = {username}
+              receiver = {receiver}
+              setMedia = {setMedia}
+              onChatClose={onChatClose}
+              media = {media}
+              />
+            ) : null
+          }
+          {/* step3 select user and switch to chat window*/
+            step === 3 ? (
+              <Public
               value = {message}
               onChange =  {(e)=>setMessage(e.target.value)}
               sendMessage = {sendMessage}

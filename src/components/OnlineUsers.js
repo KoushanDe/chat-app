@@ -8,6 +8,14 @@ export default function OnlineUsers(props) {
       </div>
 
       <ul className='users-list'>
+        <li key={"public"} onClick={() => onUserSelect( "public" )}>
+        <span style={{ textTransform: "capitalize" }}>{"Public Chat"}</span>
+                {
+                  checkUnseenMessages("public") !== 0 ? (<span className='new-message-count'>
+                  {checkUnseenMessages("public")}
+                </span>) :null
+                }
+        </li>
         {users && Object.keys(users).map(user => (
           <>
             {
