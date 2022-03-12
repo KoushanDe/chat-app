@@ -15,13 +15,21 @@ export default function MessagesControl(props) {
     receiver, 
     setMedia, 
     onChatClose,
-    media
+    media,
+    avatar
   } = props;
 
   const messages = groupMessage ? groupMessage[sortNames(username, receiver)] : [];
 
   return (
     <div>
+
+<div>
+      <header className="user-header">
+      <img src={require(`../users/${avatar}`)} />
+        <div className="app-name">{username}</div>
+      </header>
+      </div>
       <div className='online-users-header'>
         <div style={{ margin: "0 10px" , cursor:"pointer"}}>{receiver}</div>
         <div style = {{margin:"0 10px"}}>
@@ -44,13 +52,15 @@ export default function MessagesControl(props) {
                   }
                   
                   <div>
+
+                  {msg.message !== "" ? (<div className='message-text'>{msg.message}</div> ): null}
                     {
+                      
                       msg.media && msg.media.image ? 
                       (  
                       <div className="image-container">
                         <img src = {msg.media.content} width="250" alt=""/>
                         </div>) : null}
-                    {msg.message !== "" ? (<div className='message-text'>{msg.message}</div> ): null}
                   </div>
 
                 </li>)) : null

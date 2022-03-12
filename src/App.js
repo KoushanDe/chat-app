@@ -9,7 +9,7 @@ import MessagesControl from './components/MessagesControl';
 import Public from './components/Public';
 
 
-const socket = io(`http://localhost:5000`);
+const socket = io(`http://192.168.0.7:5000`);
 
 function App() {
 
@@ -19,6 +19,8 @@ function App() {
   const [avatar, setAvatar] = useState("");
   const [media, setMedia] = useState(null);
   const [users, setUsers] = useState({});
+
+  const [offline, setOffline] = useState({});
   const [message, setMessage] = useState("");
   const [groupMessage, setGroupMessage] = useState({});
   const receiverRef = useRef(null);
@@ -44,6 +46,8 @@ function App() {
   }
 
   const onPublicSelect = () => {
+    setReceiver("public");
+    receiverRef.current = "public"; 
     setStep(prevStep => prevStep + 2);
   }
 
@@ -76,6 +80,8 @@ function App() {
     
     //Main Model: Generate a unique key for each pair of sender-receiver
     //eg: sender: Koushan, receiver:Avirup => key: "Avirup-Koushan" (Sorted in alphabetical order and joined with a hiphen)
+    if(receiver!=="public")//Else unusual storage of data
+    {
     const key = sortNames(username, receiver);
     const tempGroupMessage = {...groupMessage};
 
@@ -97,25 +103,22 @@ function App() {
 
      console.log(groupMessage);
 
-     console.log(message);     
+     console.log(message);
+  }    
+  setMessage(""); 
   };
-
-  const checkUnseenMessages = (receiver)=>{
-    
-    const key = sortNames(username, receiver);
-    let unseenMessages = [];
-    if(key in groupMessage){
-      unseenMessages = groupMessage[key].filter(mgs => !mgs.view);
-    }
-
-    return unseenMessages.length;
-  }
 
   useEffect(()=>{
     socket.on("all_users", (users) => {
       console.log({users});
       setUsers(users);
     });
+
+    socket.on("offline_users", (newoff) => {
+      //console.log({users});
+      setOffline(newoff);
+    });
+
 
     socket.on("load_messages", (oldMessages) => {
       console.log(oldMessages);
@@ -127,7 +130,7 @@ function App() {
 
        console.log({rec: receiverRef.current,data});
 
-      if(receiverRef.current === "public")
+      if(data.receiver === "public")
       {
         setGroupMessage((prevGroupMessage) => {
           const messages = {...prevGroupMessage};
@@ -178,7 +181,12 @@ function App() {
   },[receiver]);
 
   const updateViewMessage = ()=>{
-    const key = sortNames(username,receiver);
+    let key;
+    if(receiver==="public"){
+    key="public"}
+    else{
+    key = sortNames(username,receiver);
+    }
     if(key in groupMessage){
       const messages = groupMessage[key].map(msg => !msg.view ? {...msg, view:true} : msg);
 
@@ -189,7 +197,11 @@ function App() {
   }
 
   useEffect(() => {
-    const key = sortNames(username,receiver);
+    let key;
+    if(receiver=="public")
+    key="public"
+    else
+    key = sortNames(username,receiver);
     if(key in groupMessage){
       if(groupMessage[key].length > 0){
         gotoBottom();
@@ -205,6 +217,7 @@ function App() {
         <img src={logo} alt="Chatter-logo" />
         <div className="app-name">Chatter</div>
       </header>
+
       <div className="chat-system">
         <div className="chat-box">
           {
@@ -216,9 +229,11 @@ function App() {
           {/* step2 shoe all available users*/
             step === 1 ? (
               <OnlineUsers onUserSelect = {onUserSelect}
+              onPublicSelect = {onPublicSelect}
               users = {users}
+              offline = {offline}
               username = {username}
-              checkUnseenMessages={checkUnseenMessages}
+              avatar = {avatar}
               />
             ) : null
           }
@@ -235,6 +250,7 @@ function App() {
               setMedia = {setMedia}
               onChatClose={onChatClose}
               media = {media}
+              avatar = {avatar}
               />
             ) : null
           }
@@ -251,6 +267,7 @@ function App() {
               setMedia = {setMedia}
               onChatClose={onChatClose}
               media = {media}
+              avatar = {avatar}
               />
             ) : null
           }
