@@ -24,7 +24,7 @@ const checkUser = (username) => {
   for(key in groupMessage)
   {
     const names = key.split("-");
-    if(username === names[0] || username === names[1])
+    if(username === names[0] || username === names[1]||key==="public")
     {
       userMessages[key] = groupMessage[key];
     }
@@ -32,6 +32,7 @@ const checkUser = (username) => {
   return userMessages;
 }
 const users = {};
+const offline = {};
 //users["public"]
 const groupMessage= {};
 groupMessage["public"] = [];
@@ -46,18 +47,26 @@ io.on("connection", (socket) => {
     for(let user in users){
       if(users[user] == socket.id){
         delete users[user];
+        offline[user]="1";
       }
     }
     io.emit("all_users", users);
+    io.emit("offline_users",offline);
   });
 
   socket.on("new_user", (username)=>{
     console.log("server: "+username);
     users[username] = socket.id;
-
+    
+    for(let user in offline){
+      if(user == username){
+        delete offline[user];
+      }
+    }
     //we can tell every other user someone connected
 
     io.emit("all_users", users);
+    io.emit("offline_users",offline);
     console.log(checkUser(username));
     io.to(socket.id).emit("load_messages",checkUser(username));
   });
@@ -66,10 +75,18 @@ io.on("connection", (socket) => {
     // console.log(data);
     const key = sortNames(data.sender, data.receiver);
     if(data.receiver==="public"){
-      groupMessage["public"] = [...groupMessage["public"], {...data, view: true}]
+      groupMessage["public"] = [...groupMessage["public"],{...data, view: true}]
+      console.log(groupMessage);
     io.emit("new_message", data);
     }
     else{
+      let flag=0;
+    const socketId = users[data.receiver];
+    for(let user in users){
+      if(user === data.receiver){
+        flag=1;
+      }
+    }
     if(key in groupMessage)
     {
       groupMessage[key] = [...groupMessage[key], {...data, view: true}];
@@ -77,11 +94,10 @@ io.on("connection", (socket) => {
     else{
       groupMessage[key] = [{...data, view:true}];
     }
-
-    console.log(groupMessage);
-    const socketId = users[data.receiver];
-
-    io.to(socketId).emit("new_message", data);
+    
+    if(flag===1){
+    io.to(socketId).emit("new_message", data);}
+    
     }});
   
 });
