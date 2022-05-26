@@ -9,7 +9,7 @@ import MessagesControl from './components/MessagesControl';
 import Public from './components/Public';
 
 
-const socket = io(`http://192.168.0.7:5000`);
+const socket = io(`http://localhost:5000`);
 
 function App() {
 
@@ -95,16 +95,16 @@ function App() {
 
     setGroupMessage({ ...tempGroupMessage });
 
-    if(media !== null){
-      setMedia(null);
-    }
-
-    setMessage("");
+    
 
      console.log(groupMessage);
 
      console.log(message);
   }    
+  if(media !== null){
+    setMedia(null);
+  }
+
   setMessage(""); 
   };
 
